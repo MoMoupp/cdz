@@ -32,14 +32,14 @@ int main(int argc, char **argv)
     //获得lcd参数
     LcdDevice *lcd = create_lcd("/dev/fb0");
     // 开机动画
-    open_animation(lcd);
+    //open_animation(lcd);
     
     //读取数据库数据
     user_data_read("userdata.txt", manger, lcd);
     //主界面
     dl_main(lcd, manger);
     //关机
-    shutdown_a(lcd);
+    //shutdown_a(lcd);
     //保存用户数据到数据库
     usre_data_save("userdata.txt", manger);
     lcd->clear(0x00000000);
