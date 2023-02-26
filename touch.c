@@ -24,7 +24,7 @@ void touch(int *ts_x, int *ts_y)
     //2.定义一个input_event结构体类型变量来保存read的数据
     struct input_event ts_event;
 
-    while (1)
+/*     while (1)
     {
         read(ts_fd, &ts_event, sizeof(ts_event));
         if (ts_event.type == EV_ABS)
@@ -46,7 +46,7 @@ void touch(int *ts_x, int *ts_y)
             break;
         }
         
-    }
+    } */
     
     while(1)
     {
@@ -58,18 +58,17 @@ void touch(int *ts_x, int *ts_y)
             if (ts_event.code == ABS_X)
             {
                 *ts_x = ts_event.value * 800 / 1024;
-                printf("x\n");
             }
             if (ts_event.code == ABS_Y)
             {
                 *ts_y = ts_event.value * 480 / 600;
-                printf("y\n");
             }
             
         }       
         // 表示松开
         if (ts_event.type == EV_KEY && ts_event.code == BTN_TOUCH && ts_event.value == 0)
         {
+            printf("x:%d y:%d\n", *ts_x, *ts_y);
             break;
         }
     }
@@ -84,4 +83,75 @@ void touch(int *ts_x, int *ts_y)
     //4.关闭触摸屏
     close(ts_fd);
 
+}
+
+char *key_input()
+{
+
+    int x, y;
+    touch(&x, &y);
+    if (x > 620 && y > 300 && x < 650 && y < 330)
+    {
+        return "1";
+    }
+    else if (y > 300 && y < 330 && x > 660 && x < 690)
+    {
+        return "2";
+    }
+    else if (y > 300 && y < 330 && x > 700 && x < 730)
+    {
+        return "3";
+    }
+    else if (y > 343 && y < 375 && x > 620 && x < 650)
+    {
+        return "4";
+    }
+    else if (y > 343 && y < 375 && x > 660 && x < 690)
+    {
+        return "5";
+    }
+    else if (y > 343 && y < 375 && x > 700 && x < 730)
+    {
+        return "6";
+    }
+    else if (y > 385 && y < 416 && x > 620 && x < 650)
+    {
+        return "7";
+    }
+    else if (y > 385 && y < 416 && x > 660 && x < 690)
+    {
+        return "8";
+    }
+    else if (y > 385 && y < 416 && x > 700 && x < 730)
+    {
+        return "9";
+    }
+    else if (y > 426 && y < 475 && x > 620 && x < 650)
+    {
+        return "0";
+    }
+    else if (y > 343 && y < 375 && x > 740 && x < 785)
+    {
+        return "D";
+    }
+    else if (y > 385 && y < 416 && x > 740 && x < 785)
+    {
+        return "C";
+    }
+    else if (y > 426 && y < 475 && x > 700 && x < 785)
+    {
+        return "T";
+    }
+    else if (y > 426 && y < 475 && x > 660 && x < 700)
+    {
+        return ".";
+    }
+    else if (y > 300 && y < 330 && x > 740 && x < 785)
+    {
+        return "Q";
+    }
+    else
+    {
+        return "Q";
+    }
 }

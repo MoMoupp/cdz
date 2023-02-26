@@ -11,7 +11,7 @@
 #include <sys/ioctl.h>
 #include <stdbool.h>
 #include <linux/fb.h>
-
+// lcd结构体，里面存储lcd文件标识符，宽，高，色深，lcd映射地址，lcd可变设备信息
 typedef struct LcdDevice
 {
     int lcd_fd; //lcd文件标识符

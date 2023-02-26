@@ -7,7 +7,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <linux/input.h>
-
+//触摸，获得x，y坐标
 void touch(int *ts_x, int *ts_y);
+//键盘输入
 char *key_input();
 #endif

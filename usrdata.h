@@ -37,4 +37,5 @@ Hnode_t *CircularLinkedList_Create(void);
 void user_TailInsert(Hnode_t *manager, user *data);
 bool user_find(Hnode_t *manager, char *f_Phone);
 user *user_find_get(Hnode_t *manager, char *f_Phone);
+
 #endif

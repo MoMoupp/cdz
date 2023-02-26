@@ -96,13 +96,12 @@ bool destroy_bmp(struct Bmp *mp)
 //BMP——————————————————————————————————————————————————
 
 
-
 // 任意位置显示bmp图片
 void show_bmp(LcdDevice *lcd, char * filename, int x, int y)
 {
     struct Bmp *mp = create_bmp(filename);
 
-    if (lcd == NULL)
+    if (lcd == NULL||mp==NULL)
     {
         return;
     }
@@ -128,10 +127,10 @@ void show_bmp(LcdDevice *lcd, char * filename, int x, int y)
 
     // 临时指针
     unsigned char *p = lcd->mptr;
-    // 多缓冲显示gif
+    // 多缓冲显示
     int show_num = 0;
     if (lcd->lcd_vinfo->yoffset == 0)
-    {
+    {   
         p += lcd->w * lcd->h * lcd->pix; // 移到到下一块屏幕，800*480*4
         show_num = 1;
     }
@@ -140,7 +139,7 @@ void show_bmp(LcdDevice *lcd, char * filename, int x, int y)
         p = lcd->mptr;
         show_num = 0;
     }
-
+    printf("P:%d\n", show_num);
     // 把指针p移动到要绘制的开始位置
     p = p + (x * lcd->pix + (y * lcd->w * lcd->pix));
     // 绘制bmp图片
@@ -340,11 +339,75 @@ void show_gif_jpeg(LcdDevice *lcd, char *filename, int x, int y)
     fclose(infile);
     free(buffer);
 }
+//开机动画
+void open_animation(LcdDevice *lcd)
+{
+    char ck[20];
+    char *ck_name[260];
 
+    for (int i = 0, j = 0; i < 260; i++)
+    {
+        if (i>=200)
+        {
+            sprintf(ck, "oa2/%d.jpg", j++);
+            ck_name[i] = (char *)malloc(sizeof(ck));
+            strcpy(ck_name[i], ck);
+            continue;
+        }
+        sprintf(ck, "oa/%d.jpg", i);
+        ck_name[i] = (char *)malloc(sizeof(ck));
+        strcpy(ck_name[i], ck);
+    }
+    printf("create over\n");
+
+    lcd->lcd_vinfo->yoffset = 0;
+    lcd->lcd_vinfo->xoffset = 0;
+    ioctl(lcd->lcd_fd, FBIOPAN_DISPLAY, lcd->lcd_vinfo);
+
+    for (int i = 0; i < 260; i++)
+    {
+        show_gif_jpeg(lcd, ck_name[i], 0, 0);
+        printf(ck_name[i]);
+        printf("\n");
+    }
+    for (int i = 0; i < 260; i++)
+    {
+        free(ck_name[i]);
+    }
+}
+//关机动画
+void shutdown_a(LcdDevice *lcd)
+{
+    char ck[20];
+    char *ck_name[60];
+
+    for (int i = 0; i < 60; i++)
+    {
+        sprintf(ck, "oa2/%d.jpg", i);
+        ck_name[i] = (char *)malloc(sizeof(ck));
+        strcpy(ck_name[i], ck);
+    }
+    printf("create over\n");
+
+    lcd->lcd_vinfo->yoffset = 0;
+    lcd->lcd_vinfo->xoffset = 0;
+    ioctl(lcd->lcd_fd, FBIOPAN_DISPLAY, lcd->lcd_vinfo);
+
+    for (int i = 0; i < 60; i++)
+    {
+        show_gif_jpeg(lcd, ck_name[i], 0, 0);
+        printf(ck_name[i]);
+        printf("\n");
+    }
+    for (int i = 0; i < 60; i++)
+    {
+        free(ck_name[i]);
+    }
+}
 // 在lcd的x,y位置显示汉字图片
 static void show_f(LcdDevice *lcd, int x, int y, bitmap *mp);
 
-void show_font(LcdDevice *lcd, char *s_font, int x, int y)
+void show_font(LcdDevice *lcd, char *s_font, int x, int y,int width,int height,int size)
 {
     // 创建字库对象
     font *f = fontLoad("./simfang.ttf");
@@ -354,13 +417,13 @@ void show_font(LcdDevice *lcd, char *s_font, int x, int y)
         return;
     }
 
-    // 设置字体大小--72号
-    fontSetSize(f, 10);
+    // 设置字体大小
+    fontSetSize(f, size);
 
     // screen-绘制文字区域 （800x80x4）
-    bitmap *screen = createBitmapWithInit(800, 480, 4, 0xffffff00); // 创建用显示汉字的像素空间（800*80*4）
+    bitmap *screen = createBitmapWithInit(width, height, 4, 0xFFFFFF00); // 创建用显示汉字的像素空间（800*80*4）
     // 把汉字绘制到文件区域
-    fontPrint(f, screen, 0, 0, s_font, 0xFF000000, 0); // RGBA
+    fontPrint(f, screen, 0, 5, s_font, 0x00000000, 0); // RGBA
     // 把文件绘制区域显示在lcd上
     // 显示
     show_f(lcd, x, y, screen);
@@ -376,9 +439,20 @@ static void show_f(LcdDevice *lcd, int x, int y, bitmap *mp)
     // 根据lcd，bmp尺寸和x，y位置计算要绘制图片的宽dw，高dh
     int dw, dh;
     // 保存lcd绘制开始位置(x,y)指针
-    unsigned char *p = NULL;
+    unsigned char *p = lcd->mptr;
     // 保存bmp图片数据的开始位置p指针
     unsigned char *px = NULL;
+    //判断可见区
+    if (lcd->lcd_vinfo->yoffset == 0)
+    {
+        p = lcd->mptr;
+    }
+    else if (lcd->lcd_vinfo->yoffset == lcd->h)
+    {
+        p += lcd->w * lcd->h * lcd->pix; // 移到到下一块屏幕，800*480*4
+        
+    }
+    //边界处理
     if (x >= 0 && y >= 0)
     {
         // 根据lcd，bmp尺寸和x，y位置计算要绘制图片的宽dw，高dh
@@ -386,7 +460,7 @@ static void show_f(LcdDevice *lcd, int x, int y, bitmap *mp)
         dh = ((y + mp->height) > lcd->h) ? (lcd->h - y) : mp->height;
 
         // 把lcd绘图指针移动x，y位置
-        p = lcd->mptr + x + y * lcd->w * 4;
+        p +=  (x + y * lcd->w) * 4;
         // 定义一个指针指向图片像素首地址
         px = mp->map;
     }
@@ -401,4 +475,169 @@ static void show_f(LcdDevice *lcd, int x, int y, bitmap *mp)
         p += lcd->w * 4;                    // lcd绘制指针移动到下一行
         px += mp->width * mp->byteperpixel; // bmp图片指针移动到下一行
     }
+}
+ 
+void show_keyboard(LcdDevice *lcd, int x, int y)
+{
+    struct Bmp *mp = create_bmp("pic/keyboard.bmp");
+
+    if (lcd == NULL||mp == NULL)
+    {
+        return;
+    }
+    int dw = mp->w; // 绘制的宽
+    int dh = mp->h; // 绘制的高
+    // 边界处理
+    if (x + mp->w > lcd->w)
+    {
+        dw = lcd->w - x;
+    }
+    if (y + mp->h > lcd->h)
+    {
+        dh = lcd->h - y;
+    }
+    int d_pix = mp->pix;
+    // 比较图片和屏幕的色深大小
+    if (mp->pix > lcd->pix)
+    {
+        d_pix = lcd->pix;
+    }
+    // 倒转
+    char *t_bmp = mp->data + mp->w * (mp->h - 1) * mp->pix;
+
+    // 临时指针
+    unsigned char *p = lcd->mptr;
+    // 可见去判断
+    if (lcd->lcd_vinfo->yoffset == 0)
+    {
+        p = lcd->mptr; 
+    }
+    else if (lcd->lcd_vinfo->yoffset == lcd->h)
+    {
+        p += lcd->w * lcd->h * lcd->pix;
+    }
+
+    // 把指针p移动到要绘制的开始位置
+    p = p + (x * lcd->pix + (y * lcd->w * lcd->pix));
+    // 绘制bmp图片
+    for (int i = 0; i < dh; i++)
+    {
+        for (int j = 0; j < dw; j++)
+        {
+            memcpy(p + j * lcd->pix, t_bmp + j * mp->pix, d_pix);
+        }
+        p += lcd->w * lcd->pix;
+        t_bmp -= mp->w * mp->pix;
+    }
+    destroy_bmp(mp);
+}
+
+void hide_keyborad(LcdDevice *lcd, int x, int y, const char *hide_keyborad_name)
+{
+    struct Bmp *mp = create_bmp(hide_keyborad_name);
+
+    if (lcd == NULL || mp == NULL)
+    {
+        return;
+    }
+    int dw = mp->w; // 绘制的宽
+    int dh = mp->h; // 绘制的高
+    // 边界处理
+    if (x + mp->w > lcd->w)
+    {
+        dw = lcd->w - x;
+    }
+    if (y + mp->h > lcd->h)
+    {
+        dh = lcd->h - y;
+    }
+    int d_pix = mp->pix;
+    // 比较图片和屏幕的色深大小
+    if (mp->pix > lcd->pix)
+    {
+        d_pix = lcd->pix;
+    }
+    // 倒转
+    char *t_bmp = mp->data + mp->w * (mp->h - 1) * mp->pix;
+
+    // 临时指针
+    unsigned char *p = lcd->mptr;
+    // 可见去判断
+    if (lcd->lcd_vinfo->yoffset == 0)
+    {
+        p = lcd->mptr;
+    }
+    else if (lcd->lcd_vinfo->yoffset == lcd->h)
+    {
+        p += lcd->w * lcd->h * lcd->pix;
+    }
+
+    // 把指针p移动到要绘制的开始位置
+    p = p + (x * lcd->pix + (y * lcd->w * lcd->pix));
+    // 绘制bmp图片
+    for (int i = 0; i < dh; i++)
+    {
+        for (int j = 0; j < dw; j++)
+        {
+            memcpy(p + j * lcd->pix, t_bmp + j * mp->pix, d_pix);
+        }
+        p += lcd->w * lcd->pix;
+        t_bmp -= mp->w * mp->pix;
+    }
+    destroy_bmp(mp);
+}
+
+void hide_keyborad_rs(LcdDevice *lcd, int x, int y)
+{
+    struct Bmp *mp = create_bmp("pic/h_keyboard_rs.bmp");
+
+    if (lcd == NULL || mp == NULL)
+    {
+        return;
+    }
+    int dw = mp->w; // 绘制的宽
+    int dh = mp->h; // 绘制的高
+    // 边界处理
+    if (x + mp->w > lcd->w)
+    {
+        dw = lcd->w - x;
+    }
+    if (y + mp->h > lcd->h)
+    {
+        dh = lcd->h - y;
+    }
+    int d_pix = mp->pix;
+    // 比较图片和屏幕的色深大小
+    if (mp->pix > lcd->pix)
+    {
+        d_pix = lcd->pix;
+    }
+    // 倒转
+    char *t_bmp = mp->data + mp->w * (mp->h - 1) * mp->pix;
+
+    // 临时指针
+    unsigned char *p = lcd->mptr;
+    // 可见去判断
+    if (lcd->lcd_vinfo->yoffset == 0)
+    {
+        p = lcd->mptr;
+    }
+    else if (lcd->lcd_vinfo->yoffset == lcd->h)
+    {
+        p += lcd->w * lcd->h * lcd->pix;
+    }
+
+    // 把指针p移动到要绘制的开始位置
+    p = p + (x * lcd->pix + (y * lcd->w * lcd->pix));
+    // 绘制bmp图片
+    for (int i = 0; i < dh; i++)
+    {
+        for (int j = 0; j < dw; j++)
+        {
+            memcpy(p + j * lcd->pix, t_bmp + j * mp->pix, d_pix);
+        }
+        p += lcd->w * lcd->pix;
+        t_bmp -= mp->w * mp->pix;
+    }
+    destroy_bmp(mp);
 }

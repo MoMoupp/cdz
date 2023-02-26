@@ -41,6 +41,8 @@ typedef struct BitFileHeader
     uint32 biClrImportant;  // 重要的颜色数，此值为0时所有颜色都重要，对于使用调色板的BMP图像来说，当显卡不能够显示所有颜色时，此值将辅助驱动程序显示颜色
 } BitHeader;
 #pragma pack(0) // 设置为默认字节对齐
+
+//bmp结构体，里面存储图片像素数据，高，色深，宽
 typedef struct Bmp
 {
     int w, h, pix;       // 保存宽高，一个像素占用的字节数
@@ -49,7 +51,7 @@ typedef struct Bmp
 } BMP;
 // 创建bmp对象
 struct Bmp *create_bmp(const char *bmpfile);
-// 按照给的尺寸缩放
+// 按照给的尺寸缩放，新的宽，新的高
 void zoom_bmp(struct Bmp *mp, int new_w, int new_h);
 // 销毁BMP对象
 bool destroy_bmp(struct Bmp *mp);
@@ -61,7 +63,14 @@ void show_jpeg(LcdDevice *lcd, char *filename, int x, int y);
 void show_gif_jpeg(LcdDevice *lcd, char *filename, int x, int y);
 // 任意位置显示bmp图片
 void show_bmp(LcdDevice *lcd, char *filename, int x, int y);
-// 在lcd的x,y位置显示汉字图片
-void show_font(LcdDevice *lcd, char *s_font, int x, int y);
-
+// 在lcd的x,y位置显示汉字图片 ，x，y位置, 宽，高，size字体大小
+void show_font(LcdDevice *lcd, char *s_font, int x, int y, int width, int height,int size);
+//开机动画
+void open_animation(LcdDevice *lcd);
+// 关机动画
+void shutdown_a(LcdDevice *lcd);
+//  显示键盘，参数：lcd结构体
+void show_keyboard(LcdDevice *lcd, int x, int y);
+// 隐藏键盘，hide_keyborad_name每个界面隐藏键盘的相应图片文件名
+void hide_keyborad(LcdDevice *lcd, int x, int y, const char *hide_keyborad_name);
 #endif

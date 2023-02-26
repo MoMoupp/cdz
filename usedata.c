@@ -85,7 +85,11 @@ bool user_find(Hnode_t *manager,char *f_Phone)
 
     //循环的从链表的首结点向后遍历，然后输出每个结点的数据域
     while (1)
-    {   
+    {
+        if (Phead == NULL)
+        {
+            break;
+        }
         //利用strcmp函数比较字符串
         if (strcmp(f_Phone, Phead->Data->phone)==0)
         {
@@ -114,6 +118,10 @@ user* user_find_get(Hnode_t *manager, char *f_Phone)
     // 循环的从链表的首结点向后遍历，然后输出每个结点的数据域
     while (1)
     {
+        if (Phead == NULL)
+        {
+            break;
+        }
         // 利用strcmp函数比较字符串
         if (strcmp(f_Phone, Phead->Data->phone) == 0)
         {
